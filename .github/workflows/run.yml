@@ -1,13 +1,11 @@
-name: HiFiNi 自动签到#Test
+name: HiFiNi 自动签到
  
 on:
     push:
         branches:
             - master
     schedule:
-        - cron: '30 13 * * *'
-env:
-    TZ: Asia/Shanghai
+        - cron: '0 0 * * *'
 
 jobs:
     build:
