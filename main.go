@@ -47,7 +47,6 @@ func SignIn(client *http.Client) bool {
 	defer response.Body.Close()
 	buf, _ := ioutil.ReadAll(response.Body)
 	fmt.Println(string(buf))
-	dingding()
 	return strings.Contains(string(buf), "成功")
 }
 
