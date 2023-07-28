@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -13,9 +14,13 @@ func main() {
 	client := &http.Client{}
 	success := SignIn(client)
 	if success {
-		fmt.Println("签到成功")
+		result := "签到成功"
+		fmt.Println(result)
+		dingding(result)
 	} else {
-		fmt.Println("签到失败")
+		result := "签到失败"
+		fmt.Println(result)
+		dingding(result)
 		os.Exit(3)
 	}
 }
@@ -46,21 +51,17 @@ func SignIn(client *http.Client) bool {
 	return strings.Contains(string(buf), "成功")
 }
 
-type DingTalkMessage struct {
-	MsgType string `json:"msgtype"`
-	Text    struct {
-		Content string `json:"content"`
-	} `json:"text"`
-}
-
-func dingding(){
+func dingding(result string){
 	// 构造要发送的消息
-	message := DingTalkMessage{
-		MsgType: "text",
+	message := struct {
+		Text struct {
+			Content string `json:"content"`
+		} `json:"text"`
+	}{
 		Text: struct {
 			Content string `json:"content"`
 		}{
-			Content: "HiFiNi, DingTalk!",
+			Content: "HiFiNi签到" + result,
 		},
 	}
 
