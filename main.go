@@ -19,6 +19,7 @@ func main() {
 	}
 }
 
+
 // SignIn 签到
 func SignIn(client *http.Client) bool {
 	//生成要访问的url
@@ -42,6 +43,13 @@ func SignIn(client *http.Client) bool {
 	fmt.Println(string(buf))
 	dingding()
 	return strings.Contains(string(buf), "成功")
+}
+
+type DingTalkMessage struct {
+	MsgType string `json:"msgtype"`
+	Text    struct {
+		Content string `json:"content"`
+	} `json:"text"`
 }
 
 func dingding(){
