@@ -21,7 +21,7 @@ func main() {
 		result := "签到失败"
 		fmt.Println(result)
 		dingding(result)
-		os.Exit(3)
+		// os.Exit(3)
 	}
 }
 
@@ -60,7 +60,7 @@ func dingding(result string){
 		Text: struct {
 			Content string `json:"content"`
 		}{
-			Content: "HiFiNi签到" + result,
+			Content: "HiFiNi" + result,
 		},
 	}
 
