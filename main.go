@@ -21,7 +21,7 @@ func main() {
 		result := "签到失败"
 		fmt.Println(result)
 		dingding(result)
-		// os.Exit(3)
+		os.Exit(3)
 	}
 }
 
@@ -53,10 +53,12 @@ func SignIn(client *http.Client) bool {
 func dingding(result string){
 	// 构造要发送的消息
 	message := struct {
+		MsgType string `json:"msgtype"`
 		Text struct {
 			Content string `json:"content"`
 		} `json:"text"`
 	}{
+		MsgType: "text",
 		Text: struct {
 			Content string `json:"content"`
 		}{
