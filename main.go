@@ -1,17 +1,35 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
+const (
+	SignInURL         = "https://www.hifini.com/sg_sign.htm"
+	CookieEnvVariable = "COOKIE"
+	DingDingWebhook   = "DINGDING_WEBHOOK"
+)
+
+type DingDingMessage struct {
+	MsgType string `json:"msgtype"`
+	Text    struct {
+		Content string `json:"content"`
+	} `json:"text"`
+}
+
 func main() {
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
 	success := SignIn(client)
 	if success {
 		result := "签到成功"
@@ -25,39 +43,43 @@ func main() {
 	}
 }
 
-
 // SignIn 签到
 func SignIn(client *http.Client) bool {
-	//生成要访问的url
-	url := "https://www.hifini.com/sg_sign.htm"
-	cookie := os.Getenv("COOKIE")
+	cookie := os.Getenv(CookieEnvVariable)
 	if cookie == "" {
-		fmt.Println("COOKIE不存在，请检查是否添加")
+		log.Println("COOKIE不存在，请检查是否添加")
 		return false
 	}
-	//提交请求
-	reqest, err := http.NewRequest("POST", url, nil)
-	reqest.Header.Add("Cookie", cookie)
-	reqest.Header.Add("x-requested-with", "XMLHttpRequest")
-	//处理返回结果
-	response, err := client.Do(reqest)
+
+	req, err := http.NewRequest("POST", SignInURL, nil)
 	if err != nil {
-		panic(err)
+		log.Println("创建请求失败:", err)
+		return false
 	}
-	defer response.Body.Close()
-	buf, _ := ioutil.ReadAll(response.Body)
-	fmt.Println(string(buf))
-	return strings.Contains(string(buf), "成功")
+
+	req.Header.Set("Cookie", cookie)
+	req.Header.Set("x-requested-with", "XMLHttpRequest")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("发送请求失败:", err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("读取响应失败:", err)
+		return false
+	}
+
+	log.Println(string(body))
+
+	return strings.Contains(string(body), "成功")
 }
 
-func dingding(result string){
-	// 构造要发送的消息
-	message := struct {
-		MsgType string `json:"msgtype"`
-		Text struct {
-			Content string `json:"content"`
-		} `json:"text"`
-	}{
+func dingding(result string) {
+	message := DingDingMessage{
 		MsgType: "text",
 		Text: struct {
 			Content string `json:"content"`
@@ -66,14 +88,24 @@ func dingding(result string){
 		},
 	}
 
-	// 将消息转换为JSON格式
-	messageJson, _ := json.Marshal(message)
-	DINGDING_WEBHOOK := os.Getenv("DINGDING_WEBHOOK")
-	// 发送HTTP POST请求
-	resp, err := http.Post(DINGDING_WEBHOOK,
-		"application/json", bytes.NewBuffer(messageJson))
+	messageJson, err := json.Marshal(message)
 	if err != nil {
-		panic(err)
+		log.Println("转换消息为JSON失败:", err)
+		return
+	}
+
+	webhook := os.Getenv(DingDingWebhook)
+	if webhook == "" {
+		log.Println("DINGDING_WEBHOOK不存在，请检查是否添加")
+		return
+	}
+
+	resp, err := http.Post(webhook, "application/json", bytes.NewBuffer(messageJson))
+	if err != nil {
+		log.Println("发送消息失败:", err)
+		return
 	}
 	defer resp.Body.Close()
+
+	log.Println("消息发送成功")
 }
